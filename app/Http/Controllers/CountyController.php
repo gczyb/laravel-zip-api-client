@@ -21,7 +21,14 @@ class CountyController extends Controller
     public function index()
     {
         $response = $this->apiService->getCounties();
-        $counties = $response['data'] ?? [];
+        
+        // Handle both formats: direct array or wrapped in 'data'
+        if (is_array($response)) {
+            // Check if it's wrapped in 'data' key
+            $counties = isset($response['data']) ? $response['data'] : $response;
+        } else {
+            $counties = [];
+        }
 
         return view('counties.index', compact('counties'));
     }
@@ -59,7 +66,9 @@ class CountyController extends Controller
     public function show($id)
     {
         $response = $this->apiService->getCounty($id);
-        $county = $response['data'] ?? null;
+        
+        // Handle both wrapped and direct response
+        $county = isset($response['data']) ? $response['data'] : $response;
 
         if (!$county) {
             abort(404);
@@ -74,7 +83,9 @@ class CountyController extends Controller
     public function edit($id)
     {
         $response = $this->apiService->getCounty($id);
-        $county = $response['data'] ?? null;
+        
+        // Handle both wrapped and direct response
+        $county = isset($response['data']) ? $response['data'] : $response;
 
         if (!$county) {
             abort(404);
