@@ -3,38 +3,53 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\ZipApiService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
     use AuthenticatesUsers;
 
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
     protected $redirectTo = '/home';
+    protected ZipApiService $apiService;
+
+    public function __construct(ZipApiService $apiService)
+    {
+        $this->apiService = $apiService;
+        $this->middleware('guest')->except('logout');
+    }
 
     /**
-     * Create a new controller instance.
-     *
-     * @return void
+     * Handle a login request to the application.
      */
-    public function __construct()
+    protected function authenticated(Request $request, $user)
     {
-        $this->middleware('guest')->except('logout');
-        $this->middleware('auth')->only('logout');
+        // Login to the API
+        $response = $this->apiService->login($request->email, $request->password);
+
+        if (!$response || !isset($response['token'])) {
+            Auth::logout();
+            return redirect()->route('login')
+                ->with('error', 'API autentikáció sikertelen.');
+        }
+
+        return redirect()->intended($this->redirectPath());
+    }
+
+    /**
+     * Log the user out of the application.
+     */
+    public function logout(Request $request)
+    {
+        // Logout from API
+        $this->apiService->logout();
+
+        $this->guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }
