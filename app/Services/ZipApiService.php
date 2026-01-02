@@ -35,15 +35,30 @@ class ZipApiService
             $headers['Authorization'] = 'Bearer ' . $this->token;
         }
 
+        $fullUrl = $this->baseUrl . $endpoint;
+        
+        // DEBUG INFO
+        \Log::info('=== API REQUEST START ===');
+        \Log::info('Method: ' . $method);
+        \Log::info('Base URL: ' . $this->baseUrl);
+        \Log::info('Endpoint: ' . $endpoint);
+        \Log::info('Full URL: ' . $fullUrl);
+        \Log::info('Headers: ', $headers);
+        \Log::info('Data: ', $data);
+
         try {
             $response = Http::withHeaders($headers)
-                ->$method($this->baseUrl . $endpoint, $data);
+                ->$method($fullUrl, $data);
+
+            \Log::info('Response Status: ' . $response->status());
+            \Log::info('Response Body: ' . $response->body());
 
             if ($response->successful()) {
+                \Log::info('=== API REQUEST SUCCESS ===');
                 return $response->json();
             }
 
-            Log::error('API Request Failed', [
+            \Log::error('API Request Failed', [
                 'endpoint' => $endpoint,
                 'status' => $response->status(),
                 'body' => $response->body()
@@ -51,10 +66,9 @@ class ZipApiService
 
             return null;
         } catch (\Exception $e) {
-            Log::error('API Request Exception', [
-                'endpoint' => $endpoint,
-                'message' => $e->getMessage()
-            ]);
+            \Log::error('=== API REQUEST EXCEPTION ===');
+            \Log::error('Exception: ' . $e->getMessage());
+            \Log::error('Trace: ' . $e->getTraceAsString());
             return null;
         }
     }
@@ -87,7 +101,24 @@ class ZipApiService
 
     public function getCounties()
     {
-        return $this->request('get', '/counties');
+        $endpoint = '/counties';
+        $fullUrl = $this->baseUrl . $endpoint;
+        
+        // DEBUG - töröld később!
+        \Log::info('API Request', [
+            'base_url' => $this->baseUrl,
+            'endpoint' => $endpoint,
+            'full_url' => $fullUrl
+        ]);
+        
+        $response = $this->request('get', $endpoint);
+        
+        // DEBUG - töröld később!
+        \Log::info('API Response', [
+            'response' => $response
+        ]);
+        
+        return $response;
     }
 
     public function getCounty(int $id)

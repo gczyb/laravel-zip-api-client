@@ -1,3 +1,6 @@
 <?php
-Route::get('cities/first-letters/{county}', [CityController::class, 'getFirstLetters']);
-Route::get('cities/by-letter/{county}/{letter}', [CityController::class, 'getCitiesByLetter']);
+
+use Illuminate\Support\Facades\Route;
+
+//ez a program a backend api vegpontjait emeszti meg
+//itt nem definialunk semmilyen APi vegpontot

@@ -22,10 +22,18 @@ class CityController extends Controller
     public function index()
     {
         $response = $this->apiService->getCities();
-        $cities = $response['data'] ?? [];
+        
+        // Handle both wrapped and direct response
+        $cities = [];
+        if (is_array($response)) {
+            $cities = isset($response['data']) ? $response['data'] : $response;
+        }
 
         $countiesResponse = $this->apiService->getCounties();
-        $counties = $countiesResponse['data'] ?? [];
+        $counties = [];
+        if (is_array($countiesResponse)) {
+            $counties = isset($countiesResponse['data']) ? $countiesResponse['data'] : $countiesResponse;
+        }
 
         return view('cities.index', compact('cities', 'counties'));
     }
@@ -36,10 +44,16 @@ class CityController extends Controller
     public function create()
     {
         $countiesResponse = $this->apiService->getCounties();
-        $counties = $countiesResponse['data'] ?? [];
+        $counties = [];
+        if (is_array($countiesResponse)) {
+            $counties = isset($countiesResponse['data']) ? $countiesResponse['data'] : $countiesResponse;
+        }
 
         $postalCodesResponse = $this->apiService->getPostalCodes();
-        $postalCodes = $postalCodesResponse['data'] ?? [];
+        $postalCodes = [];
+        if (is_array($postalCodesResponse)) {
+            $postalCodes = isset($postalCodesResponse['data']) ? $postalCodesResponse['data'] : $postalCodesResponse;
+        }
 
         return view('cities.create', compact('counties', 'postalCodes'));
     }
@@ -54,12 +68,6 @@ class CityController extends Controller
             'county_id' => 'required|integer',
             'postal_code' => 'required|string|size:4',
         ]);
-
-        // First, create or get postal code
-        $postalCodeData = [
-            'code' => $request->postal_code,
-            'city_id' => null // Will be set after city creation
-        ];
 
         // Create city
         $cityData = [
@@ -83,7 +91,7 @@ class CityController extends Controller
     public function show($id)
     {
         $response = $this->apiService->getCity($id);
-        $city = $response['data'] ?? null;
+        $city = isset($response['data']) ? $response['data'] : $response;
 
         if (!$city) {
             abort(404);
@@ -98,14 +106,17 @@ class CityController extends Controller
     public function edit($id)
     {
         $response = $this->apiService->getCity($id);
-        $city = $response['data'] ?? null;
+        $city = isset($response['data']) ? $response['data'] : $response;
 
         if (!$city) {
             abort(404);
         }
 
         $countiesResponse = $this->apiService->getCounties();
-        $counties = $countiesResponse['data'] ?? [];
+        $counties = [];
+        if (is_array($countiesResponse)) {
+            $counties = isset($countiesResponse['data']) ? $countiesResponse['data'] : $countiesResponse;
+        }
 
         return view('cities.edit', compact('city', 'counties'));
     }
@@ -156,13 +167,39 @@ class CityController extends Controller
         if ($countyId && !$letter) {
             // Get first letters for selected county
             $response = $this->apiService->getCityFirstLetters($countyId);
-            return response()->json(['letters' => $response['data'] ?? []]);
+            
+            \Log::info('First letters API response:', ['response' => $response]);
+            
+            // Handle both wrapped and direct response
+            $letters = [];
+            if (is_array($response)) {
+                if (isset($response['data'])) {
+                    $letters = $response['data'];
+                } else {
+                    $letters = $response;
+                }
+            }
+            
+            return response()->json(['letters' => $letters]);
         }
 
         if ($countyId && $letter) {
             // Get cities by county and letter
             $response = $this->apiService->getCitiesByLetter($countyId, $letter);
-            return response()->json(['cities' => $response['data'] ?? []]);
+            
+            \Log::info('Cities by letter API response:', ['response' => $response]);
+            
+            // Handle both wrapped and direct response
+            $cities = [];
+            if (is_array($response)) {
+                if (isset($response['data'])) {
+                    $cities = $response['data'];
+                } else {
+                    $cities = $response;
+                }
+            }
+            
+            return response()->json(['cities' => $cities]);
         }
 
         return response()->json(['error' => 'Invalid parameters'], 400);
@@ -178,10 +215,10 @@ class CityController extends Controller
 
         if ($countyId && $letter) {
             $response = $this->apiService->getCitiesByLetter($countyId, $letter);
-            $cities = $response['data'] ?? [];
+            $cities = isset($response['data']) ? $response['data'] : $response;
         } else {
             $response = $this->apiService->getCities();
-            $cities = $response['data'] ?? [];
+            $cities = isset($response['data']) ? $response['data'] : $response;
         }
 
         $filename = 'cities_' . date('Y-m-d_His') . '.csv';
@@ -202,10 +239,12 @@ class CityController extends Controller
             
             // Data rows
             foreach ($cities as $city) {
-                $postalCode = $city['postal_codes'][0]['code'] ?? 'N/A';
+                $postalCode = isset($city['postal_codes'][0]['code']) ? $city['postal_codes'][0]['code'] : 'N/A';
+                $countyName = isset($city['county']['name']) ? $city['county']['name'] : 'N/A';
+                
                 fputcsv($file, [
                     $city['name'],
-                    $city['county']['name'] ?? 'N/A',
+                    $countyName,
                     $postalCode
                 ]);
             }
@@ -226,14 +265,15 @@ class CityController extends Controller
 
         if ($countyId && $letter) {
             $response = $this->apiService->getCitiesByLetter($countyId, $letter);
-            $cities = $response['data'] ?? [];
+            $cities = isset($response['data']) ? $response['data'] : $response;
             
             $countyResponse = $this->apiService->getCounty($countyId);
-            $countyName = $countyResponse['data']['name'] ?? 'Ismeretlen';
+            $county = isset($countyResponse['data']) ? $countyResponse['data'] : $countyResponse;
+            $countyName = isset($county['name']) ? $county['name'] : 'Ismeretlen';
             $title = "Városok - {$countyName} megye - {$letter} betű";
         } else {
             $response = $this->apiService->getCities();
-            $cities = $response['data'] ?? [];
+            $cities = isset($response['data']) ? $response['data'] : $response;
             $title = "Összes város";
         }
 
