@@ -65,10 +65,17 @@ class CountyController extends Controller
      */
     public function show($id)
     {
-        $response = $this->apiService->getCounty($id);
-        
-        // Handle both wrapped and direct response
-        $county = isset($response['data']) ? $response['data'] : $response;
+        // KERÜLŐÚT: Mivel a getCounty($id) hiányos adatot ad,
+        // lekérjük a teljes listát (ami jó) és abból vesszük ki az elemet.
+        $response = $this->apiService->getCounties();
+
+        // Lista kicsomagolása
+        $allCounties = isset($response['data']) ? $response['data'] : $response;
+
+        // Megkeressük a megfelelőt az ID alapján
+        $county = collect($allCounties)->first(function ($item) use ($id) {
+            return isset($item['id']) && $item['id'] == $id;
+        });
 
         if (!$county) {
             abort(404);
@@ -77,15 +84,15 @@ class CountyController extends Controller
         return view('counties.show', compact('county'));
     }
 
-    /**
-     * Show the form for editing the specified county
-     */
     public function edit($id)
     {
-        $response = $this->apiService->getCounty($id);
-        
-        // Handle both wrapped and direct response
-        $county = isset($response['data']) ? $response['data'] : $response;
+        // Ugyanaz a kerülőút alkalmazása az edit-nél is
+        $response = $this->apiService->getCounties();
+        $allCounties = isset($response['data']) ? $response['data'] : $response;
+
+        $county = collect($allCounties)->first(function ($item) use ($id) {
+            return isset($item['id']) && $item['id'] == $id;
+        });
 
         if (!$county) {
             abort(404);
@@ -94,9 +101,6 @@ class CountyController extends Controller
         return view('counties.edit', compact('county'));
     }
 
-    /**
-     * Update the specified county
-     */
     public function update(Request $request, $id)
     {
         $request->validate([

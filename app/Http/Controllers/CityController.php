@@ -90,8 +90,13 @@ class CityController extends Controller
      */
     public function show($id)
     {
-        $response = $this->apiService->getCity($id);
-        $city = isset($response['data']) ? $response['data'] : $response;
+        // KERÜLŐÚT: A hibás getCity($id) helyett a listából dolgozunk
+        $response = $this->apiService->getCities(); 
+        $allCities = isset($response['data']) ? $response['data'] : $response;
+
+        $city = collect($allCities)->first(function ($item) use ($id) {
+            return isset($item['id']) && $item['id'] == $id;
+        });
 
         if (!$city) {
             abort(404);
@@ -100,23 +105,23 @@ class CityController extends Controller
         return view('cities.show', compact('city'));
     }
 
-    /**
-     * Show the form for editing the specified city
-     */
     public function edit($id)
     {
-        $response = $this->apiService->getCity($id);
-        $city = isset($response['data']) ? $response['data'] : $response;
+        // 1. Város megkeresése a listából
+        $response = $this->apiService->getCities();
+        $allCities = isset($response['data']) ? $response['data'] : $response;
+
+        $city = collect($allCities)->first(function ($item) use ($id) {
+            return isset($item['id']) && $item['id'] == $id;
+        });
 
         if (!$city) {
             abort(404);
         }
 
+        // 2. Megyék lekérése a legördülő listához
         $countiesResponse = $this->apiService->getCounties();
-        $counties = [];
-        if (is_array($countiesResponse)) {
-            $counties = isset($countiesResponse['data']) ? $countiesResponse['data'] : $countiesResponse;
-        }
+        $counties = isset($countiesResponse['data']) ? $countiesResponse['data'] : $countiesResponse;
 
         return view('cities.edit', compact('city', 'counties'));
     }
