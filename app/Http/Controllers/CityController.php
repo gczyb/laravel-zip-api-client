@@ -260,9 +260,6 @@ class CityController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Export cities to PDF
-     */
     public function exportPdf(Request $request)
     {
         $countyId = $request->input('county_id');
@@ -272,22 +269,35 @@ class CityController extends Controller
             $response = $this->apiService->getCitiesByLetter($countyId, $letter);
             $cities = isset($response['data']) ? $response['data'] : $response;
             
-            $countyResponse = $this->apiService->getCounty($countyId);
-            $county = isset($countyResponse['data']) ? $countyResponse['data'] : $countyResponse;
-            $countyName = isset($county['name']) ? $county['name'] : 'Ismeretlen';
+            $countiesResponse = $this->apiService->getCounties();
+            $allCounties = isset($countiesResponse['data']) ? $countiesResponse['data'] : $countiesResponse;
+            
+            $countyName = 'Ismeretlen';
+            if (is_array($allCounties)) {
+                foreach ($allCounties as $c) {
+                    if (isset($c['id']) && $c['id'] == $countyId) {
+                        $countyName = $c['name'];
+                        break;
+                    }
+                }
+            }
+
             $title = "Városok - {$countyName} megye - {$letter} betű";
-        } else {
+        } 
+        else 
+        {
             $response = $this->apiService->getCities();
             $cities = isset($response['data']) ? $response['data'] : $response;
             $title = "Összes város";
         }
 
-        $pdf = Pdf::loadView('cities.pdf', [
+        $pdf = Pdf::loadView('cities.pdf', 
+        [
             'cities' => $cities,
             'title' => $title,
             'date' => date('Y-m-d H:i:s')
         ]);
-
+        
         return $pdf->download('cities_' . date('Y-m-d_His') . '.pdf');
     }
 }
