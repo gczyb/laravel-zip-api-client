@@ -4,48 +4,25 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ZipApiService;
 use Illuminate\Foundation\Auth\RegistersUsers;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Register Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
-    |
-    */
-
     use RegistersUsers;
 
-    /**
-     * Where to redirect users after registration.
-     *
-     * @var string
-     */
     protected $redirectTo = '/home';
+    protected ZipApiService $apiService;
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function __construct(ZipApiService $apiService)
     {
         $this->middleware('guest');
+        $this->apiService = $apiService;
     }
 
-    /**
-     * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
     protected function validator(array $data)
     {
         return Validator::make($data, [
@@ -55,18 +32,55 @@ class RegisterController extends Controller
         ]);
     }
 
-    /**
-     * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return \App\Models\User
-     */
     protected function create(array $data)
     {
+        // FONTOS: Itt NINCS Hash::make(), mert a User modell intézi!
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'], 
         ]);
+    }
+
+    /**
+     * A regisztráció utáni folyamat felülírása
+     */
+    protected function registered(Request $request, $user)
+    {
+        // Adatok összeállítása az API számára
+        $apiData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'password' => $request->password,
+            'password_confirmation' => $request->password_confirmation,
+        ];
+
+        Log::info('API regisztráció indítása: ' . $user->email);
+
+        // Megpróbáljuk regisztrálni az API-ba
+        $apiRegisterResponse = $this->apiService->register($apiData);
+
+        // Ha az API válasza NULL (hiba történt a ZipApiService-ben)
+        if (!$apiRegisterResponse) {
+            // Töröljük a helyi felhasználót, hogy tiszta lappal kezdhessünk újra
+            $user->delete();
+            
+            Log::error('API regisztráció sikertelen, felhasználó visszavonva.');
+            
+            // Kijelentkeztetjük a rendszerből (a Laravel alapból beléptetné)
+            $this->guard()->logout();
+
+            // Visszaküldjük a felhasználót hibaüzenettel
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['email' => 'Hiba történt a központi rendszer elérésekor. Kérlek ellenőrizd a kapcsolatot vagy próbáld később.']);
+        }
+
+        // Ha sikerült, azonnal be is jelentkeztetjük az API-ba a tokenért
+        $loginResponse = $this->apiService->login($user->email, $request->password);
+
+        if ($loginResponse && isset($loginResponse['token'])) {
+             session(['api_token' => $loginResponse['token']]);
+        }
     }
 }

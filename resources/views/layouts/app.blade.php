@@ -126,11 +126,6 @@
             </div>
         </main>
 
-        <footer class="text-center text-muted">
-            <div class="container">
-                <p class="mb-0">&copy; {{ date('Y') }} {{ config('app.name') }}. Minden jog fenntartva.</p>
-            </div>
-        </footer>
     </div>
 
     <!-- Bootstrap JS -->

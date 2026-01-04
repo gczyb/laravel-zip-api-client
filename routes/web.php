@@ -5,9 +5,7 @@ use App\Http\Controllers\CountyController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [CountyController::class, 'index'])->name('home');
 
 Auth::routes();
 
