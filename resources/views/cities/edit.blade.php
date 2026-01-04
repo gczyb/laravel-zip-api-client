@@ -2,9 +2,9 @@
 
 @section('content')
 <div class="container">
-    <h1>Város szerkesztése</h1>
+    <h1>Város szerkesztése (JAVÍTVA)</h1>
 
-    {{-- HIBAÜZENETEK MEGJELENÍTÉSE --}}
+    {{-- Hibák megjelenítése --}}
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
@@ -19,35 +19,43 @@
         </div>
     @endif
 
-    {{-- ADATELŐKÉSZÍTÉS --}}
+    {{-- Megye ID biztonságos kinyerése --}}
     @php
-        // Megpróbáljuk kinyerni a megye ID-t biztonságosan.
-        // Ha nincs 'county_id', megnézzük a 'county' objektumon belül.
-        $currentCountyId = $city['county_id'] ?? $city['county']['id'] ?? null;
+        $currentCountyId = null;
+        if (isset($city['county_id'])) {
+            $currentCountyId = $city['county_id'];
+        } elseif (isset($city['county']) && is_array($city['county']) && isset($city['county']['id'])) {
+            $currentCountyId = $city['county']['id'];
+        }
     @endphp
 
     <form action="{{ route('cities.update', $city['id']) }}" method="POST">
         @csrf
         @method('PUT')
 
+        {{-- VÁROS NEVE --}}
         <div class="mb-3">
             <label for="name" class="form-label">Város neve:</label>
             <input type="text" name="name" id="name" class="form-control" 
                    value="{{ old('name', $city['name']) }}" required>
         </div>
 
+        {{-- MEGYE VÁLASZTÓ (FONTOS: Ez SELECT legyen!) --}}
         <div class="mb-3">
             <label for="county_id" class="form-label">Megye:</label>
+            
+            {{-- Itt a lényeg: SELECT, nem INPUT --}}
             <select name="county_id" id="county_id" class="form-select" required>
                 <option value="">Válassz megyét...</option>
                 @foreach($counties as $county)
                     <option value="{{ $county['id'] }}" 
-                        {{-- Itt használjuk a biztonságos változót az összehasonlításhoz --}}
-                        {{ $currentCountyId == $county['id'] ? 'selected' : '' }}>
+                        {{ (old('county_id', $currentCountyId) == $county['id']) ? 'selected' : '' }}>
                         {{ $county['name'] }}
                     </option>
                 @endforeach
             </select>
+            
+            <small class="text-muted">Jelenleg kiválasztott ID: {{ $currentCountyId ?? 'Nincs' }}</small>
         </div>
 
         <button type="submit" class="btn btn-primary">Mentés</button>
