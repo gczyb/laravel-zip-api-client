@@ -102,21 +102,8 @@ class ZipApiService
     public function getCounties()
     {
         $endpoint = '/counties';
-        $fullUrl = $this->baseUrl . $endpoint;
-        
-        // DEBUG - töröld később!
-        \Log::info('API Request', [
-            'base_url' => $this->baseUrl,
-            'endpoint' => $endpoint,
-            'full_url' => $fullUrl
-        ]);
-        
+        $fullUrl = $this->baseUrl . $endpoint;     
         $response = $this->request('get', $endpoint);
-        
-        // DEBUG - töröld később!
-        \Log::info('API Response', [
-            'response' => $response
-        ]);
         
         return $response;
     }

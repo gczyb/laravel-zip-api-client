@@ -18,47 +18,72 @@
 
                 <div class="card-body">
                     <table class="table table-bordered">
-                        <tr>
-                            <th width="200">ID</th>
-                            <td>{{ $city['id'] }}</td>
-                        </tr>
-                        <tr>
-                            <th>Város neve</th>
-                            <td><strong>{{ $city['name'] }}</strong></td>
-                        </tr>
-                        <tr>
-                            <th>Megye</th>
-                            <td>
-                                @if(isset($city['county']))
-                                    <a href="{{ route('counties.show', $city['county']['id']) }}">
-                                        {{ $city['county']['name'] }}
-                                    </a>
-                                @else
-                                    <span class="text-muted">N/A</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Irányítószám(ok)</th>
-                            <td>
-                                @if(isset($city['postal_codes']) && count($city['postal_codes']) > 0)
-                                    @foreach($city['postal_codes'] as $postalCode)
-                                        <span class="badge bg-secondary me-1">{{ $postalCode['code'] }}</span>
-                                    @endforeach
-                                @else
+                    <tr>
+                        <th width="200">ID</th>
+                        <td>{{ $city['id'] ?? $city->id ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Város neve</th>
+                        <td><strong>{{ $city['name'] ?? $city->name ?? 'N/A' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Megye</th>
+                        <td>
+                            @php
+                                $county = $city['county'] ?? $city->county ?? null;
+                                $countyId = is_array($county) ? ($county['id'] ?? null) : ($county->id ?? null);
+                                $countyName = is_array($county) ? ($county['name'] ?? null) : ($county->name ?? null);
+                            @endphp
+                            
+                            @if($countyId && $countyName)
+                                <a href="{{ route('counties.show', $countyId) }}">
+                                    {{ $countyName }}
+                                </a>
+                            @else
+                                <span class="text-muted">N/A</span>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Irányítószám(ok)</th>
+                        <td>
+                            @php
+                                $postalCodes = $city['postal_codes'] ?? $city->postal_codes ?? $city['postalCodes'] ?? $city->postalCodes ?? [];
+                            @endphp
+                            
+                            @if(is_array($postalCodes) || is_object($postalCodes))
+                                @forelse($postalCodes as $postalCode)
+                                    @php
+                                        $code = is_array($postalCode) ? ($postalCode['code'] ?? 'N/A') : ($postalCode->code ?? 'N/A');
+                                    @endphp
+                                    <span class="badge bg-secondary me-1">{{ $code }}</span>
+                                @empty
                                     <span class="text-muted">Nincs irányítószám</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Létrehozva</th>
-                            <td>{{ \Carbon\Carbon::parse($city['created_at'])->format('Y-m-d H:i:s') }}</td>
-                        </tr>
-                        <tr>
-                            <th>Módosítva</th>
-                            <td>{{ \Carbon\Carbon::parse($city['updated_at'])->format('Y-m-d H:i:s') }}</td>
-                        </tr>
-                    </table>
+                                @endforelse
+                            @else
+                                <span class="text-muted">Nincs irányítószám</span>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Létrehozva</th>
+                        <td>
+                            @php
+                                $createdAt = $city['created_at'] ?? $city->created_at ?? null;
+                            @endphp
+                            {{ $createdAt ? \Carbon\Carbon::parse($createdAt)->format('Y-m-d H:i:s') : 'N/A' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Módosítva</th>
+                        <td>
+                            @php
+                                $updatedAt = $city['updated_at'] ?? $city->updated_at ?? null;
+                            @endphp
+                            {{ $updatedAt ? \Carbon\Carbon::parse($updatedAt)->format('Y-m-d H:i:s') : 'N/A' }}
+                        </td>
+                    </tr>
+                </table>
 
                     <div class="mt-3">
                         <a href="{{ route('cities.index') }}" class="btn btn-secondary">

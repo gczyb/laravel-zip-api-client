@@ -20,19 +20,19 @@
                     <table class="table table-bordered">
                         <tr>
                             <th width="200">ID</th>
-                            <td>{{ $county['id'] }}</td>
+                            <td>{{ $county['id'] ?? $county->id ?? 'N/A' }}</td>
                         </tr>
                         <tr>
                             <th>Megye neve</th>
-                            <td><strong>{{ $county['name'] }}</strong></td>
+                            <td><strong>{{ $county['name'] ?? $county->name ?? 'N/A' }}</strong></td>
                         </tr>
                         <tr>
                             <th>Létrehozva</th>
-                            <td>{{ \Carbon\Carbon::parse($county['created_at'])->format('Y-m-d H:i:s') }}</td>
+                            <td>{{ isset($county['created_at']) ? \Carbon\Carbon::parse($county['created_at'])->format('Y-m-d H:i:s') : (isset($county->created_at) ? $county->created_at->format('Y-m-d H:i:s') : 'N/A') }}</td>
                         </tr>
                         <tr>
                             <th>Módosítva</th>
-                            <td>{{ \Carbon\Carbon::parse($county['updated_at'])->format('Y-m-d H:i:s') }}</td>
+                            <td>{{ isset($county['updated_at']) ? \Carbon\Carbon::parse($county['updated_at'])->format('Y-m-d H:i:s') : (isset($county->updated_at) ? $county->updated_at->format('Y-m-d H:i:s') : 'N/A') }}</td>
                         </tr>
                     </table>
 

@@ -17,11 +17,11 @@
                         <div class="mb-3">
                             <label for="name" class="form-label">Megye neve <span class="text-danger">*</span></label>
                             <input type="text" 
-                                   class="form-control @error('name') is-invalid @enderror" 
-                                   id="name" 
-                                   name="name" 
-                                   value="{{ old('name', $county['name']) }}"
-                                   required>
+                                    class="form-control @error('name') is-invalid @enderror" 
+                                    id="name" 
+                                    name="name" 
+                                    value="{{ old('name', $county['name'] ?? $county->name ?? '') }}"
+                                    required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
