@@ -26,22 +26,21 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
-        // 1. Megpróbálunk belépni az API-ba
         $response = $this->apiService->login($request->email, $request->password);
-
-        // 2. Ha az API válasza hibás vagy nincs benne token
+        
         if (!$response || !isset($response['token'])) {
-            // Kiléptetjük a helyi user-t is, mert az API nélkül nem ér semmit
+             dd('API Hiba történt:', $response); 
+        }
+
+        if (!$response || !isset($response['token'])) {
             Auth::logout();
             
             return redirect()->route('login')
                 ->with('error', 'Helytelen bejelentkezési adatok.');
         }
 
-        // 3. Siker! Elmentjük a tokent a munkamenetbe
         session(['api_token' => $response['token']]);
 
-        // 4. Továbbítjuk a főoldalra
         return redirect()->intended($this->redirectPath());
     }
 
@@ -50,7 +49,6 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-        // Logout from API
         $this->apiService->logout();
 
         $this->guard()->logout();

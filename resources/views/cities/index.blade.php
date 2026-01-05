@@ -15,7 +15,6 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- Megye választó -->
                     <div class="mb-4">
                         <label for="countySelect" class="form-label fw-bold">1. Válassz megyét:</label>
                         <select id="countySelect" class="form-select">
@@ -26,13 +25,11 @@
                         </select>
                     </div>
 
-                    <!-- Kezdőbetű szűrő -->
                     <div id="letterFilterContainer" class="mb-4" style="display: none;">
                         <label class="form-label fw-bold">2. Válassz kezdőbetűt:</label>
                         <div id="letterButtons" class="d-flex flex-wrap gap-2"></div>
                     </div>
 
-                    <!-- Exportálás gombok -->
                     <div id="exportButtons" class="mb-4" style="display: none;">
                         <label class="form-label fw-bold">3. Exportálás:</label>
                         <div class="d-flex gap-2">
@@ -45,7 +42,6 @@
                         </div>
                     </div>
 
-                    <!-- Eredmények táblázata -->
                     <div id="resultsContainer" style="display: none;">
                         <h5 class="mb-3">Találatok:</h5>
                         <div class="table-responsive">
@@ -61,13 +57,11 @@
                                     </tr>
                                 </thead>
                                 <tbody id="citiesTableBody">
-                                    <!-- AJAX töltés ide -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Betöltés jelző -->
                     <div id="loadingSpinner" class="text-center" style="display: none;">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Betöltés...</span>
@@ -87,7 +81,6 @@ let selectedCountyId = null;
 let selectedLetter = null;
 
 $(document).ready(function() {
-    // Megye kiválasztása
     $('#countySelect').on('change', function() {
         selectedCountyId = $(this).val();
         selectedLetter = null;
@@ -103,7 +96,6 @@ $(document).ready(function() {
         }
     });
     
-    // Kezdőbetűk betöltése
     function loadFirstLetters(countyId) {
         $('#loadingSpinner').show();
         
@@ -131,7 +123,6 @@ $(document).ready(function() {
                     
                     $('#letterFilterContainer').show();
                     
-                    // Betű kattintás esemény
                     $('.letter-btn').on('click', function() {
                         $('.letter-btn').removeClass('active btn-primary').addClass('btn-outline-primary');
                         $(this).removeClass('btn-outline-primary').addClass('btn-primary active');
@@ -150,7 +141,6 @@ $(document).ready(function() {
         });
     }
     
-    // Városok betöltése betű szerint
     function loadCitiesByLetter(countyId, letter) {
         $('#loadingSpinner').show();
         $('#resultsContainer').hide();
@@ -204,14 +194,12 @@ $(document).ready(function() {
         });
     }
     
-    // CSV export
     $('#exportCsvBtn').on('click', function() {
         if (selectedCountyId && selectedLetter) {
             window.location.href = `{{ route('cities.export.csv') }}?county_id=${selectedCountyId}&letter=${selectedLetter}`;
         }
     });
     
-    // PDF export
     $('#exportPdfBtn').on('click', function() {
         if (selectedCountyId && selectedLetter) {
             window.location.href = `{{ route('cities.export.pdf') }}?county_id=${selectedCountyId}&letter=${selectedLetter}`;

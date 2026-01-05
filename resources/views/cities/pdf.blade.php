@@ -94,22 +94,19 @@
     </style>
 </head>
 <body>
-    <!-- Fejléc -->
     <header>
-        <p class="logo">🏛️ Magyar Irányítószám Kereső</p>
+        <p class="logo">Irányítószám Kereső</p>
         <p class="subtitle">Városok listája</p>
     </header>
 
-    <!-- Lábléc -->
     <footer>
         <span>Generálva: {{ $date }}</span>
         <span style="margin: 0 20px;">|</span>
         <span>Oldal: <span class="page-number"></span></span>
         <span style="margin: 0 20px;">|</span>
-        <span>&copy; {{ date('Y') }} ZIP API Client</span>
+        <span>&copy; {{ date('Y') }}</span>
     </footer>
 
-    <!-- Tartalom -->
     <div class="content">
         <h1>{{ $title }}</h1>
 

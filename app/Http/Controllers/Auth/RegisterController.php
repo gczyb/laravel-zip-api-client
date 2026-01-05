@@ -34,7 +34,6 @@ class RegisterController extends Controller
 
     protected function create(array $data)
     {
-        // FONTOS: Itt NINCS Hash::make(), mert a User modell intézi!
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -42,12 +41,8 @@ class RegisterController extends Controller
         ]);
     }
 
-    /**
-     * A regisztráció utáni folyamat felülírása
-     */
     protected function registered(Request $request, $user)
     {
-        // Adatok összeállítása az API számára
         $apiData = [
             'name' => $user->name,
             'email' => $user->email,
@@ -57,26 +52,20 @@ class RegisterController extends Controller
 
         Log::info('API regisztráció indítása: ' . $user->email);
 
-        // Megpróbáljuk regisztrálni az API-ba
         $apiRegisterResponse = $this->apiService->register($apiData);
 
-        // Ha az API válasza NULL (hiba történt a ZipApiService-ben)
         if (!$apiRegisterResponse) {
-            // Töröljük a helyi felhasználót, hogy tiszta lappal kezdhessünk újra
             $user->delete();
             
             Log::error('API regisztráció sikertelen, felhasználó visszavonva.');
             
-            // Kijelentkeztetjük a rendszerből (a Laravel alapból beléptetné)
             $this->guard()->logout();
 
-            // Visszaküldjük a felhasználót hibaüzenettel
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['email' => 'Hiba történt a központi rendszer elérésekor. Kérlek ellenőrizd a kapcsolatot vagy próbáld később.']);
         }
 
-        // Ha sikerült, azonnal be is jelentkeztetjük az API-ba a tokenért
         $loginResponse = $this->apiService->login($user->email, $request->password);
 
         if ($loginResponse && isset($loginResponse['token'])) {

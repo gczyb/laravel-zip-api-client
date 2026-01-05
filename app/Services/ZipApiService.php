@@ -12,11 +12,8 @@ class ZipApiService
 
     public function __construct()
     {
-        // Ez olvassa ki a config/services.php-ból a beállított URL-t.
-        // Fontos: a config/services.php-ban a 'zip_api' => 'base_url'
-        // mutasson az .env API_BASE_URL változójára!
         $this->baseUrl = config('services.zip_api.base_url');
-        $this->token = session('api_token');
+        $this->token = null; 
     }
 
     public function setToken(?string $token): void
@@ -32,18 +29,17 @@ class ZipApiService
 
     protected function request(string $method, string $endpoint, array $data = [])
     {
+        $currentToken = $this->token ?: session('api_token');
+
         $headers = [];
-        
-        if ($this->token) {
-            $headers['Authorization'] = 'Bearer ' . $this->token;
+        $headers['Accept'] = 'application/json'; 
+
+        if ($currentToken) {
+            $headers['Authorization'] = 'Bearer ' . $currentToken;
         }
 
-        // Itt fűzzük össze a Base URL-t (pl http://localhost:8001/api) az endpointtal
         $fullUrl = $this->baseUrl . $endpoint;
         
-        // DEBUG LOGOLÁS (Hogy lásd a hibát a storage/logs/laravel.log-ban, ha van)
-        Log::info('=== API REQUEST START ===');
-        Log::info('Full URL: ' . $fullUrl);
 
         try {
             $response = Http::withHeaders($headers)
@@ -53,6 +49,15 @@ class ZipApiService
                 return $response->json();
             }
 
+            if ($response->status() === 401) {
+                Log::warning('API token lejárt (401). Kijelentkeztetés...', ['endpoint' => $endpoint]);
+                
+                session()->forget('api_token');
+                $this->token = null;
+                
+                return null;
+            }
+
             Log::error('API Request Failed', [
                 'endpoint' => $endpoint,
                 'status' => $response->status(),
@@ -60,6 +65,7 @@ class ZipApiService
             ]);
 
             return null;
+
         } catch (\Exception $e) {
             Log::error('=== API REQUEST EXCEPTION ===');
             Log::error($e->getMessage());
@@ -67,18 +73,13 @@ class ZipApiService
         }
     }
 
-    // --- JAVÍTOTT METÓDUSOK (Kivettük a /auth részt) ---
-
     public function register(array $data)
     {
-        // JAVÍTVA: /auth/register helyett /register
-        // Így a végleges URL ez lesz: .../api/register
         return $this->request('post', '/register', $data);
     }
 
     public function login(string $email, string $password)
     {
-        // JAVÍTVA: /auth/login helyett /login
         $response = $this->request('post', '/login', [
             'email' => $email,
             'password' => $password
@@ -93,13 +94,10 @@ class ZipApiService
 
     public function logout()
     {
-        // JAVÍTVA: /auth/logout helyett /logout
         $response = $this->request('post', '/logout');
         $this->setToken(null);
         return $response;
     }
-
-    // --- EGYÉB METÓDUSOK (Ezek változatlanok, de itt vannak a teljesség kedvéért) ---
 
     public function getCounties()
     {
